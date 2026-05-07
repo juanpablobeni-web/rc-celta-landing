@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RC Celta — ¡Avísame!</title>
+    <style>
+      :root {
+        --celta-sky: #00A3E0;
+        --celta-red: #E4002B;
+        --celta-ink: #1a1a1a;
+        --celta-mute: #F5F5F5;
+        --celta-border: #d8dde5;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--celta-ink);
+        background: var(--celta-mute);
+        line-height: 1.5;
+        font-size: 16px;
+      }
+
+      header {
+        background: var(--celta-sky);
+        color: #fff;
+        padding: 4rem 1.25rem 3.5rem;
+        text-align: center;
+      }
+
+      header section {
+        max-width: 520px;
+        margin: 0 auto;
+      }
+
+      header img {
+        max-width: 140px;
+        height: auto;
+        margin-bottom: 1.25rem;
+      }
+
+      header h1 {
+        color: #fff;
+        font-size: 2.75rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        margin: 0 0 0.75rem;
+      }
+
+      header p {
+        margin: 0;
+        font-size: 1.0625rem;
+        opacity: 0.95;
+      }
+
+      main {
+        max-width: 520px;
+        margin: -2rem auto 3rem;
+        padding: 2.25rem 1.5rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+        position: relative;
+      }
+
+      form p {
+        margin: 0 0 1.25rem;
+      }
+
+      form label {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--celta-ink);
+      }
+
+      form input[type="text"],
+      form input[type="email"],
+      form select {
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        font: inherit;
+        font-size: 16px;
+        color: var(--celta-ink);
+        border: 1px solid var(--celta-border);
+        border-radius: 6px;
+        background: #fff;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      }
+
+      form input[type="text"]:hover,
+      form input[type="email"]:hover,
+      form select:hover {
+        border-color: #b8c0cc;
+      }
+
+      form input[type="text"]:focus,
+      form input[type="email"]:focus,
+      form select:focus {
+        outline: none;
+        border-color: var(--celta-sky);
+        box-shadow: 0 0 0 3px rgba(0, 163, 224, 0.2);
+      }
+
+      form select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 2.5rem;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%231a1a1a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 0.95rem center;
+        cursor: pointer;
+      }
+      form select:disabled { cursor: not-allowed; opacity: 0.6; }
+
+      form input[type="checkbox"] {
+        margin: 0;
+        accent-color: var(--celta-sky);
+        width: 1.05rem;
+        height: 1.05rem;
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+        cursor: pointer;
+      }
+
+      form label:has(input[type="checkbox"]) {
+        font-weight: 400;
+        font-size: 0.9375rem;
+        text-transform: none;
+        letter-spacing: normal;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        cursor: pointer;
+        user-select: none;
+        padding: 0.15rem 0;
+      }
+      form label:has(input[type="checkbox"]):hover { color: #000; }
+
+      button[type="submit"] {
+        display: block;
+        width: 100%;
+        padding: 0.95rem 1rem;
+        font: inherit;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #fff;
+        background: var(--celta-red);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(228, 0, 43, 0.18);
+        transition: background-color 0.15s ease, box-shadow 0.18s ease, transform 0.08s ease;
+      }
+
+      button[type="submit"]:hover {
+        background: #c70026;
+        box-shadow: 0 6px 14px rgba(228, 0, 43, 0.28);
+        transform: translateY(-1px);
+      }
+      button[type="submit"]:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(228, 0, 43, 0.2);
+      }
+      button[type="submit"]:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(228, 0, 43, 0.32), 0 6px 14px rgba(228, 0, 43, 0.18);
+      }
+
+      @media (max-width: 480px) {
+        header { padding: 2.75rem 1rem 2.5rem; }
+        header h1 { font-size: 2.25rem; letter-spacing: 0.01em; }
+        header img { max-width: 110px; margin-bottom: 1rem; }
+        header p { font-size: 1rem; }
+        main { padding: 1.75rem 1.25rem; margin: -1.5rem 0.85rem 2rem; }
+        form p { margin: 0 0 1rem; }
+      }
+
+      @media (min-width: 640px) {
+        header { padding: 5rem 1.25rem 4.5rem; }
+        header h1 { font-size: 3.25rem; }
+        header p { font-size: 1.125rem; }
+        main { padding: 2.75rem 2.25rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <section>
+        <img src="assets/RC%20Celta%20de%20Vigo.png" alt="Escudo del RC Celta de Vigo">
+        <h1>¡Avísame!</h1>
+        <p>Recibe un aviso en cuanto se abran entradas para tu grada en Balaídos.</p>
+      </section>
+    </header>
+
+    <main>
+      <form id="avisame-form">
+        <p>
+          <label for="nombre">Nombre</label>
+          <input id="nombre" name="nombre" type="text" required>
+        </p>
+
+        <p>
+          <label for="apellidos">Apellidos</label>
+          <input id="apellidos" name="apellidos" type="text" required>
+        </p>
+
+        <p>
+          <label for="email">Correo electrónico</label>
+          <input id="email" name="email" type="email" required>
+        </p>
+
+        <p>
+          <label for="grada">Grada</label>
+          <select id="grada" name="grada" required>
+            <option value="" disabled selected>Selecciona tu grada</option>
+            <option value="224515">Sector 316</option>
+            <option value="224514">Sector 315</option>
+            <option value="224513">Sector 314</option>
+            <option value="224512">Sector 313</option>
+            <option value="224519">Sector 320</option>
+            <option value="224518">Sector 319</option>
+            <option value="224517">Sector 318</option>
+            <option value="224516">Sector 317</option>
+            <option value="224521">Sector 322</option>
+            <option value="224520">Sector 321</option>
+            <option value="224531">Sector 107 E</option>
+            <option value="224530">Sector 106 E</option>
+            <option value="224529">Sector 105 E</option>
+            <option value="224535">Sector 113 D</option>
+            <option value="224534">Sector 112 D</option>
+            <option value="224533">Sector 109 E</option>
+            <option value="224532">Sector 108 E</option>
+            <option value="224539">Sector 119 E</option>
+            <option value="224538">Sector 118 E</option>
+            <option value="224537">Sector 115 D</option>
+            <option value="224536">Sector 114 D</option>
+            <option value="224542">Sector 122 E</option>
+            <option value="224541">Sector 121 E</option>
+            <option value="224540">Sector 120 E</option>
+            <option value="224551">Pista - B3</option>
+            <option value="224550">Pista - B2</option>
+            <option value="224549">Pista - B1</option>
+            <option value="224555">Pista A2</option>
+            <option value="224554">Pista A1</option>
+            <option value="224553">Pista C2</option>
+            <option value="224552">Pista C1</option>
+            <option value="224559">Pista B3</option>
+            <option value="224558">Pista B2</option>
+            <option value="224557">Pista B1</option>
+            <option value="224556">Pista A3</option>
+            <option value="224563">Minusvalidos A</option>
+            <option value="224562">Minusvalidos B</option>
+            <option value="224561">Pista - C2</option>
+            <option value="224560">Pista - C1</option>
+            <option value="224455">Sector 107</option>
+            <option value="224454">Sector 106</option>
+            <option value="224453">Sector 105</option>
+            <option value="224459">Sector 111</option>
+            <option value="224458">Sector 110</option>
+            <option value="224457">Sector 109</option>
+            <option value="224456">Sector 108</option>
+            <option value="224463">Sector 116</option>
+            <option value="224462">Sector 114</option>
+            <option value="224461">Sector 113</option>
+            <option value="224460">Sector 112</option>
+            <option value="224467">Sector 119</option>
+            <option value="224466">Sector 118</option>
+            <option value="224465">Sector 117</option>
+            <option value="224464">Sector 115</option>
+            <option value="224470">Sector 122</option>
+            <option value="224469">Sector 121</option>
+            <option value="224468">Sector 120</option>
+            <option value="224479">Sector Palco / Llotja</option>
+            <option value="224483">Sector 210</option>
+            <option value="224482">Sector 209</option>
+            <option value="224481">Sector 208</option>
+            <option value="224480">Sector 207</option>
+            <option value="224487">Sector 214</option>
+            <option value="224486">Sector 213</option>
+            <option value="224485">Sector 212</option>
+            <option value="224484">Sector 211</option>
+            <option value="224491">Sector 218</option>
+            <option value="224490">Sector 217</option>
+            <option value="224489">Sector 216</option>
+            <option value="224488">Sector 215</option>
+            <option value="224495">Sector 222</option>
+            <option value="224494">Sector 221</option>
+            <option value="224493">Sector 220</option>
+            <option value="224492">Sector 219</option>
+            <option value="224507">Sector 308</option>
+            <option value="224506">Sector 307</option>
+            <option value="224505">Sector 306</option>
+            <option value="224504">Sector 305</option>
+            <option value="224511">Sector 312</option>
+            <option value="224510">Sector 311</option>
+            <option value="224509">Sector 310</option>
+            <option value="224508">Sector 309</option>
+          </select>
+        </p>
+
+        <p>
+          <label>
+            <input type="checkbox" id="privacidad" name="privacidad" required>
+            He leído y acepto la política de privacidad.
+          </label>
+        </p>
+
+        <p>
+          <button type="submit">Avísame</button>
+        </p>
+      </form>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var form = document.getElementById('avisame-form');
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var data = Object.fromEntries(new FormData(form));
+          data.privacidad = form.privacidad.checked;
+          console.log(data);
+        });
+      });
+    </script>
+  </body>
+</html>

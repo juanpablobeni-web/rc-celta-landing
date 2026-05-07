@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Partidos · RC Celta «Avísame»</title>
+    <style>
+      :root {
+        --bg:        #0d1117;
+        --bg-2:      #161b22;
+        --bg-3:      #1c232c;
+        --border:    #30363d;
+        --border-2:  #21262d;
+        --ink:       #e6edf3;
+        --ink-mute:  #8b949e;
+        --ink-soft:  #6e7681;
+        --accent:    #00A3E0;
+        --accent-2:  #58c4ec;
+        --green:     #3fb950;
+        --green-bg:  rgba(63, 185, 80, 0.14);
+        --amber:     #d29922;
+        --amber-bg:  rgba(210, 153, 34, 0.16);
+        --red:       #f85149;
+        --red-bg:    rgba(248, 81, 73, 0.15);
+        --celta-red: #E4002B;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .page-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(13, 17, 23, 0.88);
+        backdrop-filter: saturate(140%) blur(8px);
+        border-bottom: 1px solid var(--border);
+        padding: 0.9rem 1.5rem;
+      }
+
+      .header-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .brand { display: flex; align-items: baseline; gap: 0.55rem; font-weight: 600; }
+      .brand .mark {
+        display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 163, 224, 0.18);
+        transform: translateY(1px);
+      }
+      .brand .name { letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.9rem; }
+      .brand .sub  { color: var(--ink-mute); font-weight: 400; font-size: 0.85rem; }
+
+      .search {
+        flex: 1 1 320px;
+        max-width: 520px;
+        margin-left: auto;
+        position: relative;
+      }
+      .search input {
+        width: 100%;
+        padding: 0.6rem 0.9rem 0.6rem 2.4rem;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--ink);
+        font: inherit;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .search input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 163, 224, 0.18);
+      }
+      .search::before {
+        content: "";
+        position: absolute;
+        left: 0.85rem; top: 50%;
+        width: 14px; height: 14px;
+        border: 2px solid var(--ink-soft);
+        border-radius: 50%;
+        transform: translateY(-9px);
+      }
+      .search::after {
+        content: "";
+        position: absolute;
+        left: 1.65rem; top: 50%;
+        width: 7px; height: 2px;
+        background: var(--ink-soft);
+        transform: translateY(2px) rotate(45deg);
+        transform-origin: left center;
+      }
+
+      .count { color: var(--ink-mute); font-size: 0.85rem; white-space: nowrap; }
+      .count strong { color: var(--ink); font-weight: 600; }
+
+      main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+      }
+
+      .legend {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin: 0 0 1.5rem;
+        font-size: 0.82rem;
+        color: var(--ink-mute);
+      }
+      .legend .item { display: inline-flex; align-items: center; gap: 0.4rem; }
+      .legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+      .legend .dot.green { background: var(--green); }
+      .legend .dot.amber { background: var(--amber); }
+      .legend .dot.red   { background: var(--red); }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .card {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: border-color 0.15s ease, transform 0.15s ease;
+      }
+      .card:hover {
+        border-color: var(--ink-soft);
+        transform: translateY(-2px);
+      }
+
+      .card-img {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background: var(--bg-3);
+        overflow: hidden;
+      }
+      .card-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .card-img-placeholder {
+        width: 100%; height: 100%;
+        background:
+          linear-gradient(135deg, rgba(0,163,224,0.18), rgba(228,0,43,0.18)),
+          var(--bg-3);
+        display: grid; place-items: center;
+        color: var(--ink-soft);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .badge {
+        position: absolute;
+        top: 0.7rem; left: 0.7rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 0.25rem 0.55rem;
+        border-radius: 4px;
+        backdrop-filter: blur(6px);
+      }
+      .badge.green   { background: var(--green-bg); color: var(--green); border: 1px solid rgba(63,185,80,0.5); }
+      .badge.amber   { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(210,153,34,0.5); }
+      .badge.red     { background: var(--red-bg);   color: var(--red);   border: 1px solid rgba(248,81,73,0.5); }
+      .badge.soldout { background: rgba(0,0,0,0.55); color: #fff;        border: 1px solid var(--border); }
+
+      .card-body {
+        padding: 0.95rem 1rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+      }
+      .card-body h3 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.35;
+        letter-spacing: -0.005em;
+      }
+      .card-body .meta {
+        margin: 0;
+        font-size: 0.825rem;
+        color: var(--ink-mute);
+      }
+      .card-body .venue { color: var(--ink-soft); }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: auto;
+        padding-top: 0.4rem;
+      }
+      .price {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--ink);
+      }
+      .seats {
+        font-size: 0.82rem;
+        color: var(--ink-mute);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bar {
+        height: 5px;
+        background: var(--bg-3);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.3s ease;
+      }
+      .bar-fill.green { background: var(--green); }
+      .bar-fill.amber { background: var(--amber); }
+      .bar-fill.red   { background: var(--red); }
+      .bar-fill.soldout { background: var(--border); }
+
+      .empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem 1rem;
+        color: var(--ink-mute);
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+      }
+      .empty strong { color: var(--ink); }
+
+      footer {
+        max-width: 1280px;
+        margin: 3rem auto 0;
+        padding: 1rem 1.5rem 2rem;
+        color: var(--ink-soft);
+        font-size: 0.8rem;
+        border-top: 1px solid var(--border-2);
+      }
+      footer code {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        background: var(--bg-2);
+        padding: 0.1rem 0.4rem;
+        border-radius: 3px;
+        border: 1px solid var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="header-inner">
+        <div class="brand">
+          <span class="mark"></span>
+          <span class="name">¡Avísame!</span>
+          <span class="sub">— partidos en venta</span>
+        </div>
+        <div class="search">
+          <input id="q" type="search" placeholder="Buscar por partido o estadio…" autocomplete="off" autofocus>
+        </div>
+        <div class="count" id="count"></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="legend">
+        <span class="item"><span class="dot green"></span> Disponible (≥ 60% libre)</span>
+        <span class="item"><span class="dot amber"></span> Casi lleno (25–60% libre)</span>
+        <span class="item"><span class="dot red"></span> Últimas entradas (&lt; 25% libre)</span>
+      </div>
+
+      <section id="grid" class="grid"></section>
+    </main>
+
+    <footer>
+      <p>Datos en vivo de ONEBOX · canal <code>2287</code> · capturados al cargar el script de generación. Para refrescar, vuelve a ejecutar el generador.</p>
+    </footer>
+
+    <script>
+      const SESSIONS = [
+  {
+    "id": 240895,
+    "name": "NUMERADO",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2020-02-12T21:00:00+01:00",
+    "priceMin": 10,
+    "priceMax": 50,
+    "seatsTotal": 14959,
+    "seatsAvailable": 14372,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 249468,
+    "name": "NUMERADO",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2020-11-25T15:00:00+01:00",
+    "priceMin": 10,
+    "priceMax": 50,
+    "seatsTotal": 14958,
+    "seatsAvailable": 14159,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/sesion/249468/227973_592200_1739950876381.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617439,
+    "name": "NUMERADO diaria 44",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2025-07-17T12:00:00+02:00",
+    "priceMin": 8,
+    "priceMax": 8,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17196,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/sesion/617439/235087_822608_1751532170715.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 509945,
+    "name": "NUMERADO diaria 44",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-03-29T12:00:00+02:00",
+    "priceMin": 8,
+    "priceMax": 8,
+    "seatsTotal": 17211,
+    "seatsAvailable": 16040,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/sesion/509945/227982_809211_1739951200833.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 569823,
+    "name": "NUMERADO diaria 44",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-03-31T12:00:00+02:00",
+    "priceMin": 8,
+    "priceMax": 8,
+    "seatsTotal": 17211,
+    "seatsAvailable": 16617,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/sesion/569823/227995_524471_1739952263739.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 613473,
+    "name": "NUMERADO diaria 45",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-03-31T12:00:00+02:00",
+    "priceMin": 8,
+    "priceMax": 8,
+    "seatsTotal": 17211,
+    "seatsAvailable": 16670,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/sesion/613473/234113_155364_1749117112376.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 616004,
+    "name": "NUMERADO diaria 46",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-01T12:00:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17139,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 616005,
+    "name": "NUMERADO diaria 46",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-06T12:00:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17172,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617422,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:00:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17195,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617423,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:06:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17204,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617424,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:12:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17211,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617425,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:18:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17203,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617426,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:24:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17204,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617427,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:30:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17211,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617428,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:36:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17209,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617429,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:42:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17211,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617430,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:48:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17211,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617431,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T10:54:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17198,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617432,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T11:00:00+02:00",
+    "priceMin": 15,
+    "priceMax": 15,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17210,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 617433,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Estadio Saprissa",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-04-07T11:06:00+02:00",
+    "priceMin": 0,
+    "priceMax": 20,
+    "seatsTotal": 17211,
+    "seatsAvailable": 17205,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  },
+  {
+    "id": 695442,
+    "name": "Multisesion",
+    "eventName": "* API NUMBERED EVENT",
+    "venueName": "Palau Sant Jordi Recinto ejemplo",
+    "venueCity": "Barcelona",
+    "dateStart": "2026-07-05T11:00:00+02:00",
+    "priceMin": 0,
+    "priceMax": 0,
+    "seatsTotal": 14959,
+    "seatsAvailable": 14956,
+    "imageUrl": "https://s3.amazonaws.com/onebox-repository/pre/1/657/evento/4587/175304_477248_1739950985999.jpg",
+    "forSale": true,
+    "soldOut": false
+  }
+];
+
+      const grid   = document.getElementById('grid');
+      const search = document.getElementById('q');
+      const count  = document.getElementById('count');
+
+      const dateFmt = new Intl.DateTimeFormat('es-ES', {
+        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"\']/g, c => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return '—';
+        try { return dateFmt.format(new Date(iso)); }
+        catch { return iso; }
+      }
+
+      function fmtPrice(min, max) {
+        if (min == null || max == null) return '—';
+        if (min === max) return `${min}€`;
+        return `${min}€ – ${max}€`;
+      }
+
+      function status(available, total, soldOut) {
+        if (soldOut || total === 0 || available === 0) {
+          return { label: 'AGOTADO', cls: 'soldout' };
+        }
+        const pct = available / total;
+        if (pct >= 0.60) return { label: 'DISPONIBLE',       cls: 'green' };
+        if (pct >= 0.25) return { label: 'CASI LLENO',       cls: 'amber' };
+        return                   { label: 'ÚLTIMAS ENTRADAS', cls: 'red'   };
+      }
+
+      function cardHtml(s) {
+        const st  = status(s.seatsAvailable, s.seatsTotal, s.soldOut);
+        const pct = s.seatsTotal ? Math.max(0, Math.min(100, Math.round(100 * s.seatsAvailable / s.seatsTotal))) : 0;
+        const title = s.eventName || s.name || '—';
+        const venue = [s.venueName, s.venueCity].filter(Boolean).map(escapeHtml).join(' · ');
+        const img = s.imageUrl
+          ? `<img src="${escapeHtml(s.imageUrl)}" alt="${escapeHtml(title)}" loading="lazy" referrerpolicy="no-referrer">`
+          : '<div class="card-img-placeholder">Sin imagen</div>';
+        return `
+          <article class="card">
+            <div class="card-img">
+              ${img}
+              <span class="badge ${st.cls}">${st.label}</span>
+            </div>
+            <div class="card-body">
+              <h3>${escapeHtml(title)}</h3>
+              <p class="meta">${escapeHtml(fmtDate(s.dateStart))}</p>
+              <p class="meta venue">${venue || '—'}</p>
+              <div class="row">
+                <span class="price">${fmtPrice(s.priceMin, s.priceMax)}</span>
+                <span class="seats">${s.seatsAvailable.toLocaleString('es-ES')} libres · ${pct}%</span>
+              </div>
+              <div class="bar"><div class="bar-fill ${st.cls}" style="width:${pct}%"></div></div>
+            </div>
+          </article>
+        `;
+      }
+
+      function render(filter = '') {
+        const q = filter.trim().toLowerCase();
+        const filtered = q
+          ? SESSIONS.filter(s => [s.eventName, s.name, s.venueName, s.venueCity]
+              .filter(Boolean).some(v => String(v).toLowerCase().includes(q)))
+          : SESSIONS;
+
+        count.innerHTML = `<strong>${filtered.length}</strong> ${filtered.length === 1 ? 'partido' : 'partidos'}`;
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `<div class="empty">No hay partidos que coincidan con <strong>"${escapeHtml(filter)}"</strong>.</div>`;
+          return;
+        }
+        grid.innerHTML = filtered.map(cardHtml).join('');
+      }
+
+      search.addEventListener('input', e => render(e.target.value));
+      render();
+    </script>
+  </body>
+</html>

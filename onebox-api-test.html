@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ONEBOX API — RC Celta «Avísame» integration</title>
+    <style>
+      :root {
+        --bg:        #0d1117;
+        --bg-2:      #161b22;
+        --bg-3:      #0a0e13;
+        --border:    #30363d;
+        --border-2:  #21262d;
+        --ink:       #e6edf3;
+        --ink-mute:  #8b949e;
+        --ink-soft:  #6e7681;
+        --accent:    #00A3E0;
+        --accent-2:  #58c4ec;
+        --green:     #3fb950;
+        --yellow:    #d29922;
+        --red:       #E4002B;
+        --string:    #a5d6ff;
+        --number:    #79c0ff;
+        --boolean:   #ff7b72;
+        --key:       #7ee787;
+        --comment:   #6e7681;
+        --punct:     #c9d1d9;
+        --redact:    #ffa657;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { color: var(--accent-2); text-decoration: underline; }
+
+      code, pre, .mono {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      }
+
+      /* ---------- Page header ---------- */
+      .page-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(13, 17, 23, 0.85);
+        backdrop-filter: saturate(140%) blur(8px);
+        border-bottom: 1px solid var(--border);
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        font-weight: 600;
+      }
+
+      .brand .mark {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 163, 224, 0.18);
+        transform: translateY(1px);
+      }
+
+      .brand .name { letter-spacing: 0.04em; text-transform: uppercase; }
+      .brand .sub  { color: var(--ink-mute); font-weight: 400; font-size: 0.9rem; }
+
+      .meta { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--ink-mute); }
+      .meta code { color: var(--ink); background: var(--bg-2); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border); font-size: 0.85rem; }
+
+      .safe-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--redact);
+        border: 1px solid rgba(255, 166, 87, 0.25);
+        background: rgba(255, 166, 87, 0.08);
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+      }
+      .safe-note .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--redact); }
+
+      /* ---------- Layout ---------- */
+      .layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+      }
+
+      .toc {
+        position: sticky;
+        top: 5rem;
+        align-self: start;
+        font-size: 0.875rem;
+      }
+      .toc h3 {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: var(--ink-soft);
+        margin: 0 0 0.6rem;
+      }
+      .toc ol { list-style: none; padding: 0; margin: 0; }
+      .toc li { margin: 0.35rem 0; }
+      .toc a { color: var(--ink-mute); display: block; padding: 0.25rem 0.5rem; border-left: 2px solid transparent; border-radius: 0 4px 4px 0; }
+      .toc a:hover { color: var(--ink); background: var(--bg-2); border-left-color: var(--border); text-decoration: none; }
+
+      main { min-width: 0; }
+
+      .intro h1 {
+        font-size: 1.85rem;
+        margin: 0 0 0.5rem;
+        letter-spacing: -0.01em;
+      }
+      .intro p { color: var(--ink-mute); max-width: 70ch; margin: 0 0 0.6rem; }
+
+      /* ---------- Endpoint section ---------- */
+      .endpoint {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-2);
+      }
+      .endpoint:first-of-type { border-top: none; }
+
+      .endpoint-head {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .method {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        padding: 0.25rem 0.55rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .method.post { background: rgba(210, 153, 34, 0.15); color: var(--yellow); border: 1px solid rgba(210, 153, 34, 0.4); }
+      .method.get  { background: rgba(63, 185, 80, 0.15);  color: var(--green);  border: 1px solid rgba(63, 185, 80, 0.4); }
+
+      .path {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 0.95rem;
+        color: var(--ink);
+        background: var(--bg-2);
+        padding: 0.25rem 0.55rem;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+      }
+      .path .var { color: var(--accent); }
+
+      .endpoint h2 {
+        font-size: 1.35rem;
+        margin: 0.4rem 0 0.4rem;
+        letter-spacing: -0.005em;
+      }
+      .endpoint .desc { color: var(--ink-mute); margin: 0 0 1.25rem; max-width: 70ch; }
+
+      /* ---------- Request / Response split ---------- */
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .toc { position: static; }
+        .split { grid-template-columns: 1fr; }
+      }
+
+      .panel {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        padding: 0.55rem 0.85rem;
+        background: var(--bg-3);
+        border-bottom: 1px solid var(--border-2);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-mute);
+      }
+      .panel-head .label { display: flex; align-items: center; gap: 0.5rem; }
+      .panel-head .label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-soft); }
+      .panel-head.req .label .dot { background: var(--yellow); }
+      .panel-head.res .label .dot { background: var(--green); }
+
+      .status {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+      }
+      .status.ok { background: rgba(63, 185, 80, 0.15); color: var(--green); border: 1px solid rgba(63, 185, 80, 0.4); }
+
+      .panel pre {
+        margin: 0;
+        padding: 1rem 1.1rem;
+        font-size: 0.825rem;
+        line-height: 1.55;
+        color: var(--ink);
+        background: transparent;
+        overflow-x: auto;
+        white-space: pre;
+        tab-size: 2;
+      }
+
+      /* ---------- Code syntax tints ---------- */
+      .req-line { color: var(--yellow); }
+      .hdr-key  { color: var(--key); }
+      .hdr-val  { color: var(--string); }
+      .json-key { color: var(--key); }
+      .json-str { color: var(--string); }
+      .json-num { color: var(--number); }
+      .json-bool { color: var(--boolean); }
+      .json-punct { color: var(--punct); }
+      .comment  { color: var(--comment); font-style: italic; }
+      .redacted { color: var(--redact); }
+      .blank    { display: block; height: 0.6rem; }
+
+      /* ---------- Footer ---------- */
+      footer {
+        margin: 4rem auto 0;
+        max-width: 1200px;
+        padding: 1.5rem 1.5rem 3rem;
+        border-top: 1px solid var(--border-2);
+        color: var(--ink-soft);
+        font-size: 0.85rem;
+      }
+      footer code { color: var(--ink-mute); background: var(--bg-2); padding: 0.1rem 0.35rem; border-radius: 3px; border: 1px solid var(--border); }
+      footer p { margin: 0.4rem 0; }
+    </style>
+  </head>
+
+  <body>
+    <header class="page-header">
+      <div class="brand">
+        <span class="mark"></span>
+        <span class="name">ONEBOX API</span>
+        <span class="sub">— RC Celta «Avísame» integration</span>
+      </div>
+      <div class="meta">
+        <span class="safe-note"><span class="dot"></span> Secrets redacted — safe to share</span>
+        <span>Base URL <code>https://api.oneboxtds.net</code></span>
+        <span>Channel <code>2287</code></span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="toc">
+        <h3>Endpoints</h3>
+        <ol>
+          <li><a href="#auth">1. Authentication</a></li>
+          <li><a href="#sessions">2. List sessions</a></li>
+          <li><a href="#availability">3. Session availability</a></li>
+        </ol>
+      </aside>
+
+      <main>
+        <div class="intro">
+          <h1>ONEBOX API reference</h1>
+          <p>The three calls used by the «Avísame» fan-alert flow: obtain a bearer token, list the sessions on our channel, and check seat availability per stadium sector for a given session. All examples are real captured exchanges with secrets stripped.</p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 1. Authentication                                            -->
+        <!-- ============================================================ -->
+        <section id="auth" class="endpoint">
+          <div class="endpoint-head">
+            <span class="method post">POST</span>
+            <code class="path">/oauth/token</code>
+          </div>
+          <h2>Authentication</h2>
+          <p class="desc">Exchanges the channel's client credentials for a short-lived bearer token (12-hour expiry). The token is sent as <code>Authorization: Bearer …</code> on every subsequent call.</p>
+
+          <div class="split">
+            <div class="panel">
+              <div class="panel-head req"><span class="label"><span class="dot"></span>Request</span><span>application/x-www-form-urlencoded</span></div>
+<pre><span class="req-line">POST /oauth/token HTTP/1.1</span>
+<span class="hdr-key">Host</span>: <span class="hdr-val">api.oneboxtds.net</span>
+<span class="hdr-key">Content-Type</span>: <span class="hdr-val">application/x-www-form-urlencoded</span>
+<span class="hdr-key">Accept</span>: <span class="hdr-val">application/json</span>
+<span class="blank"></span>
+<span class="hdr-key">grant_type</span>=<span class="hdr-val">client_credentials</span>
+&amp;<span class="hdr-key">channel_id</span>=<span class="hdr-val">2287</span>
+&amp;<span class="hdr-key">client_id</span>=<span class="hdr-val">seller-channel-client</span>
+&amp;<span class="hdr-key">client_secret</span>=<span class="redacted">••••••••••••••••••••••••••••••••</span></pre>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head res"><span class="label"><span class="dot"></span>Response</span><span class="status ok">200 OK</span></div>
+<pre><span class="hdr-key">Content-Type</span>: <span class="hdr-val">application/json;charset=UTF-8</span>
+<span class="blank"></span>
+<span class="json-punct">{</span>
+  <span class="json-key">"access_token"</span><span class="json-punct">:</span> <span class="json-str">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.</span><span class="redacted">••••••••••••••••••••</span><span class="json-str">.</span><span class="redacted">••••••••••••••••••••</span><span class="json-str">"</span><span class="json-punct">,</span>
+  <span class="json-key">"token_type"</span><span class="json-punct">:</span> <span class="json-str">"bearer"</span><span class="json-punct">,</span>
+  <span class="json-key">"expires_in"</span><span class="json-punct">:</span> <span class="json-num">43200</span><span class="json-punct">,</span>
+  <span class="json-key">"scope"</span><span class="json-punct">:</span> <span class="json-str">"api-channels-all api-distribution-all api-catalog-all api-external-all api-gateway api-customers-mgmt-all api-orders-mgmt-all"</span><span class="json-punct">,</span>
+  <span class="json-key">"authInfo"</span><span class="json-punct">:</span> <span class="redacted">"•••• [REDACTED] ••••"</span><span class="json-punct">,</span>
+  <span class="json-key">"jti"</span><span class="json-punct">:</span> <span class="redacted">"•••• [REDACTED] ••••"</span>
+<span class="json-punct">}</span></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- 2. List sessions                                             -->
+        <!-- ============================================================ -->
+        <section id="sessions" class="endpoint">
+          <div class="endpoint-head">
+            <span class="method get">GET</span>
+            <code class="path">/catalog-api/v1/sessions</code>
+          </div>
+          <h2>List sessions</h2>
+          <p class="desc">Returns every session (match, event slot) currently bound to the authenticated channel. The «Avísame» backend polls this list to detect new sessions and to refresh metadata. Each item carries its event, venue, dates, sale window, and a top-level availability summary.</p>
+
+          <div class="split">
+            <div class="panel">
+              <div class="panel-head req"><span class="label"><span class="dot"></span>Request</span><span>Bearer auth</span></div>
+<pre><span class="req-line">GET /catalog-api/v1/sessions HTTP/1.1</span>
+<span class="hdr-key">Host</span>: <span class="hdr-val">api.oneboxtds.net</span>
+<span class="hdr-key">Authorization</span>: <span class="hdr-val">Bearer </span><span class="redacted">••••••••••••••••••••••••••••••••</span>
+<span class="hdr-key">Accept</span>: <span class="hdr-val">application/json</span></pre>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head res"><span class="label"><span class="dot"></span>Response</span><span class="status ok">200 OK</span></div>
+<pre><span class="hdr-key">Content-Type</span>: <span class="hdr-val">application/json</span>
+<span class="blank"></span>
+<span class="json-punct">{</span>
+  <span class="json-key">"content"</span><span class="json-punct">:</span> <span class="json-punct">[</span>
+    <span class="json-punct">{</span>
+      <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">240895</span><span class="json-punct">,</span>
+      <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"NUMERADO"</span><span class="json-punct">,</span>
+      <span class="json-key">"type"</span><span class="json-punct">:</span> <span class="json-str">"SESSION"</span><span class="json-punct">,</span>
+      <span class="json-key">"event"</span><span class="json-punct">:</span> <span class="json-punct">{</span>
+        <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">4587</span><span class="json-punct">,</span>
+        <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"* API NUMBERED EVENT"</span>
+      <span class="json-punct">}</span><span class="json-punct">,</span>
+      <span class="json-key">"venue"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">657</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Estadio Municipal de Balaídos"</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+      <span class="json-key">"date"</span><span class="json-punct">:</span> <span class="json-punct">{</span>
+        <span class="json-key">"start"</span><span class="json-punct">:</span> <span class="json-str">"2020-02-12T21:00:00+01:00"</span><span class="json-punct">,</span>
+        <span class="json-key">"end"</span><span class="json-punct">:</span>   <span class="json-str">"2027-02-06T21:00:00+01:00"</span><span class="json-punct">,</span>
+        <span class="json-key">"sale_start"</span><span class="json-punct">:</span> <span class="json-str">"2019-05-10T10:00:00+02:00"</span><span class="json-punct">,</span>
+        <span class="json-key">"sale_end"</span><span class="json-punct">:</span>   <span class="json-str">"2027-02-06T21:00:00+01:00"</span>
+      <span class="json-punct">}</span><span class="json-punct">,</span>
+      <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"type"</span><span class="json-punct">:</span> <span class="json-str">"BOUNDED"</span><span class="json-punct">,</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">14786</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">14372</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+      <span class="json-key">"for_sale"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+      <span class="json-key">"on_sale"</span><span class="json-punct">:</span>  <span class="json-bool">true</span><span class="json-punct">,</span>
+      <span class="json-key">"sold_out"</span><span class="json-punct">:</span> <span class="json-bool">false</span>
+    <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="comment">// 20 more sessions …</span>
+  <span class="json-punct">]</span>
+<span class="json-punct">}</span></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- 3. Session availability                                      -->
+        <!-- ============================================================ -->
+        <section id="availability" class="endpoint">
+          <div class="endpoint-head">
+            <span class="method get">GET</span>
+            <code class="path">/catalog-api/v1/sessions/<span class="var">{sessionId}</span>/availability</code>
+          </div>
+          <h2>Session availability</h2>
+          <p class="desc">Per-session seat availability broken down by <em>price type</em> (PISTA, VIP, PISO 1–3) and by <em>sector</em> (the stadium grada). The «Avísame» rule engine watches this endpoint to decide when to fire fan alerts — e.g. "Pista Alta has just opened up".</p>
+
+          <div class="split">
+            <div class="panel">
+              <div class="panel-head req"><span class="label"><span class="dot"></span>Request</span><span>Bearer auth</span></div>
+<pre><span class="req-line">GET /catalog-api/v1/sessions/240895/availability HTTP/1.1</span>
+<span class="hdr-key">Host</span>: <span class="hdr-val">api.oneboxtds.net</span>
+<span class="hdr-key">Authorization</span>: <span class="hdr-val">Bearer </span><span class="redacted">••••••••••••••••••••••••••••••••</span>
+<span class="hdr-key">Accept</span>: <span class="hdr-val">application/json</span></pre>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head res"><span class="label"><span class="dot"></span>Response</span><span class="status ok">200 OK</span></div>
+<pre><span class="hdr-key">Content-Type</span>: <span class="hdr-val">application/json</span>
+<span class="blank"></span>
+<span class="json-punct">{</span>
+  <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">240895</span><span class="json-punct">,</span>
+  <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"NUMERADO"</span><span class="json-punct">,</span>
+  <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"type"</span><span class="json-punct">:</span> <span class="json-str">"BOUNDED"</span><span class="json-punct">,</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">14786</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">14372</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+  <span class="json-key">"price_types"</span><span class="json-punct">:</span> <span class="json-punct">[</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">32713</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"PISTA"</span><span class="json-punct">,</span>  <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">290</span><span class="json-punct">,</span>  <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">199</span>  <span class="json-punct">}</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">32714</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"VIP"</span><span class="json-punct">,</span>    <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">1616</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">1526</span> <span class="json-punct">}</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">32715</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"PISO 1"</span><span class="json-punct">,</span> <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">3098</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">2915</span> <span class="json-punct">}</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">32716</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"PISO 2"</span><span class="json-punct">,</span> <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">3973</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">3945</span> <span class="json-punct">}</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">32717</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"PISO 3"</span><span class="json-punct">,</span> <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">1724</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">1704</span> <span class="json-punct">}</span> <span class="json-punct">}</span>
+  <span class="json-punct">]</span><span class="json-punct">,</span>
+  <span class="json-key">"sectors"</span><span class="json-punct">:</span> <span class="json-punct">[</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">224551</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Pista - B3"</span><span class="json-punct">,</span> <span class="json-key">"price_types"</span><span class="json-punct">:</span> <span class="json-punct">[</span> <span class="json-punct">{</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"PISTA"</span><span class="json-punct">,</span>  <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">10</span><span class="json-punct">,</span>  <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">10</span>  <span class="json-punct">}</span> <span class="json-punct">}</span> <span class="json-punct">]</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">224535</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Sector 113 D"</span><span class="json-punct">,</span> <span class="json-key">"price_types"</span><span class="json-punct">:</span> <span class="json-punct">[</span> <span class="json-punct">{</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"VIP"</span><span class="json-punct">,</span>    <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">240</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">217</span> <span class="json-punct">}</span> <span class="json-punct">}</span> <span class="json-punct">]</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="json-punct">{</span> <span class="json-key">"id"</span><span class="json-punct">:</span> <span class="json-num">224461</span><span class="json-punct">,</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Sector 113"</span><span class="json-punct">,</span>   <span class="json-key">"price_types"</span><span class="json-punct">:</span> <span class="json-punct">[</span> <span class="json-punct">{</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"PISO 1"</span><span class="json-punct">,</span> <span class="json-key">"availability"</span><span class="json-punct">:</span> <span class="json-punct">{</span> <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">193</span><span class="json-punct">,</span> <span class="json-key">"available"</span><span class="json-punct">:</span> <span class="json-num">175</span> <span class="json-punct">}</span> <span class="json-punct">}</span> <span class="json-punct">]</span> <span class="json-punct">}</span><span class="json-punct">,</span>
+    <span class="comment">// 77 more sectors …</span>
+  <span class="json-punct">]</span>
+<span class="json-punct">}</span></pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <p>All examples captured against <code>https://api.oneboxtds.net</code> on channel <code>2287</code>. The <code>access_token</code>, <code>authInfo</code>, <code>jti</code>, and <code>client_secret</code> values have been redacted; <code>channel_id</code> and <code>client_id</code> are public configuration parameters and remain visible.</p>
+      <p>For the runnable validator script see <code>check-onebox.js</code>; credentials live in <code>.env</code> (gitignored).</p>
+    </footer>
+  </body>
+</html>
