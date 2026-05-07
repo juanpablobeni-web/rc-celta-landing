@@ -554,7 +554,7 @@
           }
 
           // Capture grada display text alongside the option value (sector ID)
-          var gradaSel = form.grada;
+          var gradaSel  = form.grada;
           var gradaId   = gradaSel.value;
           var gradaText = gradaSel.options[gradaSel.selectedIndex] ? gradaSel.options[gradaSel.selectedIndex].text : '';
 
@@ -574,54 +574,38 @@
             SOURCE:     'landing-v1'
           };
 
-          // Build JSONP URL
-          var url = new URL('https://' + cfg.listManageHost + '/subscribe/post-json');
-          url.searchParams.set('u',  cfg.u);
-          url.searchParams.set('id', cfg.listWebId);
-          Object.keys(fields).forEach(function (k) { url.searchParams.set(k, fields[k]); });
-          // Honeypot — bots tend to fill empty hidden fields
-          url.searchParams.set('b_' + cfg.u + '_' + cfg.listWebId, '');
-          var cbName = '__avisameCb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
-          url.searchParams.set('c', cbName);
+          var body = new URLSearchParams();
+          body.set('u',  cfg.u);
+          body.set('id', cfg.listWebId);
+          Object.keys(fields).forEach(function (k) { body.set(k, fields[k]); });
+          // Honeypot — anti-bot empty hidden field, expected name format
+          body.set('b_' + cfg.u + '_' + cfg.listWebId, '');
 
           button.disabled = true;
           button.textContent = 'Enviando…';
           showStatus('loading', 'Enviando…');
 
-          var script = document.createElement('script');
-          var done = false;
-          var cleanup = function () {
-            if (done) return;
-            done = true;
-            if (script.parentNode) script.parentNode.removeChild(script);
-            try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
-            button.disabled = false;
-            button.textContent = originalLabel;
-          };
-          var timeoutId = setTimeout(function () {
-            cleanup();
-            showStatus('error', 'No pudimos contactar con Mailchimp. Inténtalo de nuevo.');
-          }, 12000);
-
-          window[cbName] = function (resp) {
-            clearTimeout(timeoutId);
-            cleanup();
-            if (resp && resp.result === 'success') {
+          // mode: 'no-cors' allows cross-origin POST without CORS preflight.
+          // The response is opaque (we can't read body or status) so we treat
+          // any non-throwing fetch as optimistic success. Mailchimp must have
+          // reCAPTCHA disabled on this audience for the POST to actually land.
+          fetch('https://' + cfg.listManageHost + '/subscribe/post', {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+          })
+            .then(function () {
               showStatus('success', '¡Listo! Te avisaremos cuando se abran entradas.');
               form.reset();
-            } else {
-              var msg = (resp && resp.msg) || 'No se pudo completar la inscripción.';
-              msg = String(msg).replace(/^\d+\s*-\s*/, ''); // strip "0 - " prefix Mailchimp adds
-              showStatus('error', msg);
-            }
-          };
-          script.onerror = function () {
-            clearTimeout(timeoutId);
-            cleanup();
-            showStatus('error', 'Error de red al enviar el formulario.');
-          };
-          script.src = url.toString();
-          document.body.appendChild(script);
+            })
+            .catch(function () {
+              showStatus('error', 'Error de red al enviar el formulario.');
+            })
+            .then(function () {
+              button.disabled = false;
+              button.textContent = originalLabel;
+            });
         });
       });
     </script>
