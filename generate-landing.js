@@ -48,6 +48,16 @@ function formatDate(iso) {
   } catch { return iso; }
 }
 
+function formatDateForMailchimp(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const yy = d.getUTCFullYear();
+  return `${dd}/${mm}/${yy}`;
+}
+
 function formatPrice(min, max) {
   if (min == null || max == null) return '';
   if (min === max) return `${min} €`;
@@ -170,7 +180,64 @@ function replaceBind(html, key, text) {
     (_, p1, p2, p3) => `${p1}${status.cls}${p2}${escapeHtml(status.label)}${p3}`
   );
 
-  // 5b. Sector replacement (existing logic)
+  // 5b. Bake AVISAME_CONFIG + MATCH_CONTEXT between sentinels.
+  // Fetch the public u= and id= subscribe-URL components from Mailchimp's API
+  // so the user never has to look them up by hand.
+  const apiKey  = env.MAILCHIMP_API_KEY || '';
+  const audId   = env.MAILCHIMP_AUDIENCE_ID || '';
+  const dc      = apiKey.includes('-') ? apiKey.split('-')[1] : '';
+  let config = { dc: '', u: '', listWebId: '', listManageHost: '', configured: false };
+  if (apiKey && audId && dc) {
+    try {
+      const mcAuth = 'Basic ' + Buffer.from(`anystring:${apiKey}`).toString('base64');
+      const r = await fetch(`https://${dc}.api.mailchimp.com/3.0/lists/${audId}`, {
+        headers: { 'Authorization': mcAuth, 'Accept': 'application/json' },
+      });
+      if (r.ok) {
+        const list = await r.json();
+        // subscribe_url_long looks like: https://gmail.us15.list-manage.com/subscribe?u=...&id=...
+        const subUrl = new URL(list.subscribe_url_long);
+        config = {
+          dc,
+          u:              subUrl.searchParams.get('u') || '',
+          listWebId:      subUrl.searchParams.get('id') || '',
+          listManageHost: subUrl.host,
+          configured:     true,
+        };
+      } else {
+        console.warn(`Mailchimp /lists/${audId} returned HTTP ${r.status}; AVISAME_CONFIG left unconfigured.`);
+      }
+    } catch (err) {
+      console.warn(`Could not fetch Mailchimp subscribe URL: ${err.message}`);
+    }
+  }
+  const u   = config.u;
+  const wid = config.listWebId;
+  const matchCtx = {
+    id:        String(sessionId),
+    name:      eventName,
+    subtitle:  subtitle,
+    dateText:  dateText,
+    dateForMC: formatDateForMailchimp(session.date && session.date.start),
+    venue:     venueText,
+    priceText: priceText,
+    status:    status.cls,
+  };
+  const configBlock =
+    `<!-- generated:config-start -->\n` +
+    `    <script>\n` +
+    `      window.AVISAME_CONFIG = ${JSON.stringify(config, null, 2).replace(/\n/g, '\n      ')};\n` +
+    `      window.MATCH_CONTEXT  = ${JSON.stringify(matchCtx, null, 2).replace(/\n/g, '\n      ')};\n` +
+    `    </script>\n` +
+    `    <!-- generated:config-end -->`;
+  const configRe = /<!-- generated:config-start -->[\s\S]*?<!-- generated:config-end -->/;
+  if (!configRe.test(html)) {
+    console.error('Could not find <!-- generated:config-start --> sentinels in landing.html.');
+    process.exit(7);
+  }
+  html = html.replace(configRe, configBlock);
+
+  // 5c. Sector replacement (existing logic)
   const re = /([ \t]*)(<select\b[^>]*\bid="grada"[^>]*>)([\s\S]*?)(<\/select>)/;
   const m = html.match(re);
   if (!m) {
@@ -194,6 +261,7 @@ function replaceBind(html, key, text) {
   console.log(`  price:        ${priceText || '—'}`);
   console.log(`  availability: ${availText} [${status.label}]`);
   console.log(`Sectors baked:  ${sectors.length}`);
+  console.log(`Mailchimp:      ${config.configured ? `wired (dc=${dc}, u=${u.slice(0,4)}…, listWebId=${wid})` : 'NOT WIRED — set MAILCHIMP_API_KEY/MAILCHIMP_U/MAILCHIMP_LIST_WEB_ID in .env'}`);
 })().catch(err => {
   console.error('Unexpected error:', err.message);
   process.exit(1);

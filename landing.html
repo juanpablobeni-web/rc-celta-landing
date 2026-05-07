@@ -4,6 +4,27 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RC Celta — ¡Avísame!</title>
+    <!-- generated:config-start -->
+    <script>
+      window.AVISAME_CONFIG = {
+        "dc": "us15",
+        "u": "25e4064eb40b93b3bdcc4daed",
+        "listWebId": "19b2e521cf",
+        "listManageHost": "gmail.us15.list-manage.com",
+        "configured": true
+      };
+      window.MATCH_CONTEXT  = {
+        "id": "240895",
+        "name": "* API NUMBERED EVENT",
+        "subtitle": "GIRA 2019",
+        "dateText": "12 feb 2020, 21:00",
+        "dateForMC": "12/02/2020",
+        "venue": "Estadio Saprissa, Barcelona",
+        "priceText": "10 € – 50 €",
+        "status": "on-sale"
+      };
+    </script>
+    <!-- generated:config-end -->
     <style>
       :root {
         --celta-sky: #00A3E0;
@@ -303,6 +324,24 @@
         outline: none;
         box-shadow: 0 0 0 3px rgba(228, 0, 43, 0.32), 0 6px 14px rgba(228, 0, 43, 0.18);
       }
+      button[type="submit"][disabled] {
+        opacity: 0.7;
+        cursor: progress;
+        transform: none;
+        filter: none;
+      }
+
+      .form-status {
+        margin-top: 0.85rem;
+        padding: 0.7rem 0.95rem;
+        border-radius: 6px;
+        font-size: 0.92rem;
+        line-height: 1.4;
+      }
+      .form-status[hidden] { display: none; }
+      .form-status--loading { background: rgba(0, 163, 224, 0.08); color: #006c98; border: 1px solid rgba(0, 163, 224, 0.25); }
+      .form-status--success { background: rgba(63, 185, 80, 0.12); color: #1b6829;          border: 1px solid rgba(63, 185, 80, 0.4); }
+      .form-status--error   { background: rgba(228, 0, 43, 0.10); color: var(--celta-red);  border: 1px solid rgba(228, 0, 43, 0.35); }
 
       @media (max-width: 480px) {
         body > header { padding: 2.75rem 1rem 2.5rem; }
@@ -483,18 +522,106 @@
         <p>
           <button type="submit">Avísame</button>
         </p>
+
+        <div id="form-status" class="form-status" role="status" aria-live="polite" hidden></div>
       </form>
       </section>
     </main>
 
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        var form = document.getElementById('avisame-form');
+        var form     = document.getElementById('avisame-form');
+        var button   = form.querySelector('button[type="submit"]');
+        var statusEl = document.getElementById('form-status');
+        var originalLabel = button.textContent;
+
+        function showStatus(kind, msg) {
+          statusEl.className = 'form-status form-status--' + kind;
+          statusEl.textContent = msg;
+          statusEl.hidden = false;
+        }
+        function clearStatus() { statusEl.hidden = true; statusEl.textContent = ''; }
+
         form.addEventListener('submit', function (event) {
           event.preventDefault();
-          var data = Object.fromEntries(new FormData(form));
-          data.privacidad = form.privacidad.checked;
-          console.log(data);
+          clearStatus();
+
+          var cfg   = window.AVISAME_CONFIG || {};
+          var match = window.MATCH_CONTEXT  || {};
+          if (!cfg.configured || !cfg.u || !cfg.listWebId || !cfg.listManageHost) {
+            showStatus('error', 'Configuración pendiente. Vuelve a intentarlo en unos minutos.');
+            return;
+          }
+
+          // Capture grada display text alongside the option value (sector ID)
+          var gradaSel = form.grada;
+          var gradaId   = gradaSel.value;
+          var gradaText = gradaSel.options[gradaSel.selectedIndex] ? gradaSel.options[gradaSel.selectedIndex].text : '';
+
+          var fields = {
+            EMAIL:      form.email.value.trim(),
+            FNAME:      form.nombre.value.trim(),
+            LNAME:      form.apellidos.value.trim(),
+            GRADA:      gradaText,
+            GRADAID:    gradaId,
+            MATCH:      match.name || '',
+            MATCHID:    match.id || '',
+            MATCHDATE:  match.dateForMC || '',
+            VENUE:      match.venue || '',
+            MATCHPRICE: match.priceText || '',
+            MATCHSTAT:  match.status || '',
+            PRIVACYTS:  form.privacidad.checked ? new Date().toISOString() : '',
+            SOURCE:     'landing-v1'
+          };
+
+          // Build JSONP URL
+          var url = new URL('https://' + cfg.listManageHost + '/subscribe/post-json');
+          url.searchParams.set('u',  cfg.u);
+          url.searchParams.set('id', cfg.listWebId);
+          Object.keys(fields).forEach(function (k) { url.searchParams.set(k, fields[k]); });
+          // Honeypot — bots tend to fill empty hidden fields
+          url.searchParams.set('b_' + cfg.u + '_' + cfg.listWebId, '');
+          var cbName = '__avisameCb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+          url.searchParams.set('c', cbName);
+
+          button.disabled = true;
+          button.textContent = 'Enviando…';
+          showStatus('loading', 'Enviando…');
+
+          var script = document.createElement('script');
+          var done = false;
+          var cleanup = function () {
+            if (done) return;
+            done = true;
+            if (script.parentNode) script.parentNode.removeChild(script);
+            try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+            button.disabled = false;
+            button.textContent = originalLabel;
+          };
+          var timeoutId = setTimeout(function () {
+            cleanup();
+            showStatus('error', 'No pudimos contactar con Mailchimp. Inténtalo de nuevo.');
+          }, 12000);
+
+          window[cbName] = function (resp) {
+            clearTimeout(timeoutId);
+            cleanup();
+            if (resp && resp.result === 'success') {
+              showStatus('success', '¡Listo! Te avisaremos cuando se abran entradas.');
+              form.reset();
+            } else {
+              var msg = (resp && resp.msg) || 'No se pudo completar la inscripción.';
+              msg = String(msg).replace(/^\d+\s*-\s*/, ''); // strip "0 - " prefix Mailchimp adds
+              showStatus('error', msg);
+            }
+          };
+          script.onerror = function () {
+            clearTimeout(timeoutId);
+            cleanup();
+            showStatus('error', 'Error de red al enviar el formulario.');
+          };
+          script.src = url.toString();
+          document.body.appendChild(script);
         });
       });
     </script>
